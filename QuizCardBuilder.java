@@ -2,101 +2,64 @@
 import java.util.*;
 import java.awt.event.*;
 import javax.swing.*;
-import java.awt.*;
 import java.io.*;
 
 public class QuizCardBuilder {
 
     private JTextArea question;
     private JTextArea answer;
-    private ArrayList cardList;
+    private ArrayList cardList = new ArrayList();
+    private JPanel mainPanel = new JPanel();
     private JFrame frame;
-
-    // additional, bonus method not found in any book!
 
     public static void main (String[] args) {
         QuizCardBuilder builder = new QuizCardBuilder();
-        builder.go();
+        builder.renderQuestionBuilderGui();
     }
 
-    public void go() {
-        // build gui
-        frame = new JFrame("Quiz Card Builder");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);  // title bar
-        JPanel mainPanel = new JPanel();
-        Font bigFont = new Font("sanserif", Font.BOLD, 24);
+    public void renderQuestionBuilderGui() {
         question = new JTextArea(6,20);
-        question.setLineWrap(true);
-        question.setWrapStyleWord(true);
-        question.setFont(bigFont);
-
-        JScrollPane qScroller = new JScrollPane(question);
-        qScroller.setVerticalScrollBarPolicy(
-                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        qScroller.setHorizontalScrollBarPolicy(
-                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
         answer = new JTextArea(6,20);
-        answer.setLineWrap(true);
-        answer.setWrapStyleWord(true);
-        answer.setFont(bigFont);
+        JScrollPane qScroller = QuizCardUtils.buildJScrollPane(question);
+        JScrollPane aScroller = QuizCardUtils.buildJScrollPane(answer);
+        JLabel qLabel = new JLabel("Enter Question:");
+        JLabel aLabel = new JLabel("Enter Answer:");
 
-        JScrollPane aScroller = new JScrollPane(answer);
-        aScroller.setVerticalScrollBarPolicy(
-                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        aScroller.setHorizontalScrollBarPolicy(
-                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
-        JButton nextButton = new JButton("Next Card");
+        JButton nextButton = new JButton("Create Another Card");
+        nextButton.addActionListener(new NextCardListener());
+        JButton saveButton = new JButton("Save Cards");
+        saveButton.addActionListener(new SaveButtonListener());
         JButton studyButton = new JButton("Start Studying");
-        cardList = new ArrayList();
-        JLabel qLabel = new JLabel("Question:");
-        JLabel aLabel = new JLabel("Answer:");
+        studyButton.addActionListener(new StudyListener());
 
         mainPanel.add(qLabel);
         mainPanel.add(qScroller);
         mainPanel.add(aLabel);
         mainPanel.add(aScroller);
         mainPanel.add(nextButton);
-        nextButton.addActionListener(new NextCardListener());
+        mainPanel.add(saveButton);
         mainPanel.add(studyButton);
-        studyButton.addActionListener(new StudyListener());
-        JMenuBar menuBar = new JMenuBar();
-        JMenu fileMenu = new JMenu("File");
-        JMenuItem newMenuItem = new JMenuItem("New");
 
-        JMenuItem saveMenuItem = new JMenuItem("Save");
-        newMenuItem.addActionListener(new NewMenuListener());
-        saveMenuItem.addActionListener(new SaveMenuListener());
-
-        fileMenu.add(newMenuItem);
-        fileMenu.add(saveMenuItem);
-        menuBar.add(fileMenu);
-        frame.setJMenuBar(menuBar);
-
-        frame.getContentPane().add(BorderLayout.CENTER, mainPanel);
-        frame.setSize(500,600);
-        frame.setVisible(true);
+        frame = QuizCardUtils.buildJFrame(mainPanel);
     }
-
 
     public class NextCardListener implements ActionListener {
         public void actionPerformed(ActionEvent ev) {
             QuizCard card = new QuizCard(question.getText(), answer.getText());
             cardList.add(card);
             clearCard();
-
         }
     }
 
     public class StudyListener implements ActionListener {
         public void actionPerformed(ActionEvent ev) {
             QuizCardPlayer newGame = new QuizCardPlayer();
-            newGame.go();
+            newGame.renderLoadCardsGui();
         }
     }
 
-    public class SaveMenuListener implements ActionListener {
+    public class SaveButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent ev) {
             QuizCard card = new QuizCard(question.getText(), answer.getText());
             cardList.add(card);
@@ -107,14 +70,6 @@ public class QuizCardBuilder {
         }
     }
 
-    public class NewMenuListener implements ActionListener {
-        public void actionPerformed(ActionEvent ev) {
-            cardList.clear();
-            clearCard();
-        }
-    }
-
-
     private void clearCard() {
         question.setText("");
         answer.setText("");
@@ -122,7 +77,6 @@ public class QuizCardBuilder {
     }
 
     private void saveFile(File file) {
-
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(file));
             Iterator cardIterator = cardList.iterator();
@@ -132,14 +86,11 @@ public class QuizCardBuilder {
                 writer.write(card.getAnswer() + "\n");
             }
             writer.close();
-
-
         } catch(IOException ex) {
             System.out.println("couldn't write the cardList out");
             ex.printStackTrace();
         }
-
-    } // close method
+    }
 }
        
            

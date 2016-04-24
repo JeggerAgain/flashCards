@@ -7,74 +7,40 @@ import java.io.*;
 
 public class QuizCardPlayer {
 
-    private JTextArea display;
-    private JTextArea answer;
     private ArrayList cardList;
     private QuizCard currentCard;
     private QuizCard firstCard;
     private Iterator cardIterator;
     private JFrame frame;
     private JButton nextButton;
+    private JButton loadCardsButton;
     private boolean isShowAnswer;
-
-    // additional, bonus method not found in any book!
+    private JTextArea question;
+    private JTextArea answer;
+    private JPanel mainPanel;
 
     public static void main (String[] args) {
         QuizCardPlayer qReader = new QuizCardPlayer();
-        qReader.go();
+        qReader.renderLoadCardsGui();
     }
 
-    public void go() {
+    public void renderLoadCardsGui() {
+        mainPanel = new JPanel();
 
-        frame = new JFrame("Quiz Card Player");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        JPanel mainPanel = new JPanel();
-        Font bigFont = new Font("sanserif", Font.BOLD, 24);
+        loadCardsButton = new JButton("Load card set");
+        loadCardsButton.addActionListener(new OpenFileDialogListener());
+        mainPanel.add(loadCardsButton);
 
-        display = new JTextArea(9,20);
-        display.setFont(bigFont);
-        display.setLineWrap(true);
-        display.setWrapStyleWord(true);
-        display.setEditable(false);
-
-        JScrollPane qScroller = new JScrollPane(display);
-        qScroller.setVerticalScrollBarPolicy(
-                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        qScroller.setHorizontalScrollBarPolicy(
-                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-        nextButton = new JButton("Show Question");
-
-        mainPanel.add(qScroller);
-        mainPanel.add(nextButton);
-        nextButton.addActionListener(new NextCardListener());
-        JMenuBar menuBar = new JMenuBar();
-        JMenu fileMenu = new JMenu("File");
-
-        JMenuItem loadMenuItem = new JMenuItem("Load card set");
-
-        loadMenuItem.addActionListener(new OpenMenuListener());
-
-        fileMenu.add(loadMenuItem);
-
-        menuBar.add(fileMenu);
-        frame.setJMenuBar(menuBar);
-
-        frame.getContentPane().add(BorderLayout.CENTER, mainPanel);
-        frame.setSize(500,600);
-        frame.setVisible(true);
-    } // close go
-
+        frame = QuizCardUtils.buildJFrame(mainPanel);
+    }
 
     public class NextCardListener implements ActionListener {
         public void actionPerformed(ActionEvent ev) {
             if (isShowAnswer) {
-                // show the answer because they've seen the question
-                display.setText(currentCard.getAnswer());
+                answer.setText(currentCard.getAnswer());
                 nextButton.setText("Next Card");
                 isShowAnswer = false;
             } else {
-                // show the next question
                 if (cardIterator.hasNext()) {
 
                     showNextCard();
@@ -82,16 +48,17 @@ public class QuizCardPlayer {
                 } else {
                         showFirstCard();
                     }
-                } // close if
-            } // close method
-    }// close inner class
+                }
+            }
+    }
 
-
-    public class OpenMenuListener implements ActionListener {
+    public class OpenFileDialogListener implements ActionListener {
         public void actionPerformed(ActionEvent ev) {
             JFileChooser fileOpen = new JFileChooser();
             fileOpen.showOpenDialog(frame);
             loadFile(fileOpen.getSelectedFile());
+            renderCardGui();
+            showFirstCard();
         }
     }
 
@@ -99,7 +66,7 @@ public class QuizCardPlayer {
         cardList = new ArrayList();
         try {
             BufferedReader reader = new BufferedReader(new FileReader(file));
-            String line = null;
+            String line;
             while ((line = reader.readLine()) != null) {
                 makeCard(line);
             }
@@ -109,10 +76,29 @@ public class QuizCardPlayer {
             System.out.println("couldn't read the card file");
             ex.printStackTrace();
         }
-
-        // now time to start
         cardIterator = cardList.iterator();
-        showNextCard();
+    }
+
+    private void renderCardGui() {
+        mainPanel.remove(loadCardsButton);
+
+        question = new JTextArea(6,20);
+        answer = new JTextArea(6,20);
+        JScrollPane qScroller = QuizCardUtils.buildJScrollPane(question);
+        JScrollPane aScroller = QuizCardUtils.buildJScrollPane(answer);
+        JLabel qLabel = new JLabel("Question");
+        JLabel aLabel = new JLabel("Answer");
+
+        nextButton = new JButton("Show Question");
+        nextButton.addActionListener(new NextCardListener());
+
+        mainPanel.add(qLabel);
+        mainPanel.add(qScroller);
+        mainPanel.add(aLabel);
+        mainPanel.add(aScroller);
+        mainPanel.add(nextButton);
+
+        frame = QuizCardUtils.buildJFrame(mainPanel);
     }
 
     private void makeCard(String lineToParse) {
@@ -126,18 +112,20 @@ public class QuizCardPlayer {
 
     private void showNextCard() {
         currentCard = (QuizCard) cardIterator.next();
-        display.setText(currentCard.getQuestion());
+        question.setText(currentCard.getQuestion());
+        answer.setText("");
         nextButton.setText("Show Answer");
         isShowAnswer = true;
     }
 
     private void showFirstCard() {
         firstCard = (QuizCard) cardList.get(0);
-        display.setText(firstCard.getQuestion());
+        question.setText(currentCard.getQuestion());
+        answer.setText("");
         nextButton.setText("Show Answer");
         isShowAnswer = true;
     }
-} // close class
+}
       
 
 
